@@ -1,0 +1,52 @@
+// This file is part of NppLsp.
+// 
+// Copyright (C)2018 Justin Dailey <dail8859@yahoo.com>
+// 
+// NppLsp is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either
+// version 2 of the License, or (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+#include <windows.h>
+#include "Version.h"
+
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+1 VERSIONINFO
+    FILEVERSION     VERSION_NUM
+    PRODUCTVERSION  VERSION_NUM
+    FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+    FILEFLAGS       VS_FF_SPECIALBUILD
+    FILEOS          VOS__WINDOWS32
+    FILETYPE        VFT_DLL
+    FILESUBTYPE     VFT2_UNKNOWN
+{
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "040904b0"
+        {
+            VALUE "Comments", "Notepad++ plugin"
+            VALUE "CompanyName", "Justin Dailey <dail8859@yahoo.com>"
+            VALUE "FileDescription", "Notepad++ plugin"
+            VALUE "FileVersion", VERSION_TEXT
+            VALUE "InternalName", "NppLsp"
+            VALUE "OriginalFilename", "NppLsp.dll"
+            VALUE "ProductName", "NppLsp"
+            VALUE "ProductVersion", VERSION_TEXT
+            VALUE "SpecialBuild", "UNICODE"
+        }
+    }
+    BLOCK "VarFileInfo"
+    {
+        VALUE "Translation", 0x0409, 0x01B5
+    }
+}
