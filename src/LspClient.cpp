@@ -23,34 +23,82 @@
 
 using namespace nlohmann;
 
+enum CompletionItemKind {
+	Text = 1,
+	Method = 2,
+	Function = 3,
+	Constructor = 4,
+	Field = 5,
+	Variable = 6,
+	Class = 7,
+	Interface = 8,
+	Module = 9,
+	Property = 10,
+	Unit = 11,
+	Value = 12,
+	Enum = 13,
+	Keyword = 14,
+	Snippet = 15,
+	Color = 16,
+	File = 17,
+	Reference = 18
+};
+
 
 LspClient::LspClient(ScintillaGateway &editor) : editor(editor) {
+	log_file = CreateFile(L"C:\\lsp.log", GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
 	CreatePipes();
 	CreateChildProcess();
 
-	// TODO: handle initialize response
-	requestInitialize();
+	capabilities = requestInitialize();
 }
 
 LspClient::~LspClient() {
+	if (log_file) {
+		CloseHandle(log_file);
+	}
+
+	CloseHandle(g_hChildStd_IN_Rd);
+	CloseHandle(g_hChildStd_IN_Wr);
+	CloseHandle(g_hChildStd_OUT_Rd);
+	CloseHandle(g_hChildStd_OUT_Wr);
 }
 
 json LspClient::read() {
 	DWORD dwRead;
+	std::string buffer;
 
-	// Read in a "large" chunk
-	buffer.clear();
-	buffer.resize(4096 * 2);
-	ReadFile(g_hChildStd_OUT_Rd, buffer.data(), 4096 * 2, &dwRead, NULL);
-	buffer.resize(dwRead);
+	buffer.resize(128);
+	ReadFile(g_hChildStd_OUT_Rd, (void*)buffer.data(), 128, &dwRead, NULL);
 
-	std::string f(buffer.begin(), buffer.end());
+	// Find the lenght .e.g "Content-Length: XXX\r\n"
+	int length = std::stoi(buffer.substr(buffer.find_first_of("123456789")));
 
-	return json::parse(f.substr(f.find("\r\n\r\n") + 4));
+	// Skip all the headers since they end with two new lines
+	size_t start = buffer.find("\r\n\r\n") + 4;
+
+	// For sanity erase everything up until the start of the json
+	buffer.erase(0, start);
+
+	// Probably need to grab more
+	if (buffer.length() < (size_t)length) {
+		// Resize it enough to fit the rest of the data
+		buffer.resize(length);
+
+		ReadFile(g_hChildStd_OUT_Rd, (void*)&buffer[dwRead - start], length - (dwRead - start), &dwRead, NULL);
+	}
+
+	json result = json::parse(buffer);
+
+	log(result);
+
+	return result;
 }
 
 json LspClient::request(const std::string &method, const json &params) {
-	int request_id = ++(this->id);
+	int request_id = this->id;
+	this->id++;
 
 	json j = {
 		{ "jsonrpc", "2.0" },
@@ -64,6 +112,8 @@ json LspClient::request(const std::string &method, const json &params) {
 	message += std::to_string(s.length());
 	message += "\r\n\r\n";
 	message += s;
+
+	log(j);
 
 	DWORD at;
 	WriteFile(g_hChildStd_IN_Wr, message.c_str(), message.length(), &at, NULL);
@@ -97,6 +147,8 @@ void LspClient::notify(const std::string &method, const json &params) {
 	message += std::to_string(s.length());
 	message += "\r\n\r\n";
 	message += s;
+
+	log(j);
 
 	DWORD at;
 	WriteFile(g_hChildStd_IN_Wr, message.c_str(), message.length(), &at, NULL);
@@ -199,10 +251,6 @@ json LspClient::requestInitialize() {
 	return request("initialize", json::parse(content));
 }
 
-void LspClient::notifyInitailized() {
-	notify("initialized", json::object());
-}
-
 json LspClient::requestShutdown() {
 	return request("shutdown");
 }
@@ -248,7 +296,7 @@ void LspClient::notifyDidSave() {
 	}));
 }
 
-json LspClient::requestCompletion(int position) {
+json LspClient::requestCompletion(int line, int character) {
 	notifyDidChange();
 
 	return request("textDocument/completion", json({
@@ -256,8 +304,8 @@ json LspClient::requestCompletion(int position) {
 			{ "uri", "file:///Users/Justin/Desktop/lsp.py" }
 		} },
 		{ "position",{
-			{ "line", editor.LineFromPosition(position) },
-			{ "character", editor.GetColumn(position) }
+			{ "line", line },
+			{ "character", character }
 		} }
 	}));
 }
@@ -374,5 +422,28 @@ void LspClient::CreateChildProcess() {
 
 		CloseHandle(piProcInfo.hProcess);
 		CloseHandle(piProcInfo.hThread);
+	}
+}
+
+void LspClient::log(const std::string &s) {
+	DWORD at;
+
+	if (log_file) {
+		WriteFile(log_file, "---------\r\n", 11, &at, NULL);
+		WriteFile(log_file, s.c_str(), s.length(), &at, NULL);
+		WriteFile(log_file, "\r\n\r\n", 4, &at, NULL);
+		FlushFileBuffers(log_file);
+	}
+}
+
+void LspClient::log(const json &j) {
+	DWORD at;
+
+	if (log_file) {
+		auto message = j.dump(1, '\t');
+		WriteFile(log_file, "---------\r\n\r\n", 13, &at, NULL);
+		WriteFile(log_file, message.c_str(), message.length(), &at, NULL);
+		WriteFile(log_file, "\r\n\r\n", 4, &at, NULL);
+		FlushFileBuffers(log_file);
 	}
 }

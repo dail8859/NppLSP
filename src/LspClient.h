@@ -22,6 +22,7 @@
 
 #include "ScintillaGateway.h"
 #include "json.hpp"
+
 using namespace nlohmann;
 
 class LspClient {
@@ -38,9 +39,9 @@ public:
 
 	// General
 	json requestInitialize();
-	void notifyInitailized();
 	json requestShutdown();
 	void notifyExit();
+	// $/cancelRequest
 
 	// Window
 	// window/showMessage
@@ -59,7 +60,7 @@ public:
 	// textDocument/didClose
 	void notifyDidOpen();
 	void notifyDidSave();
-	json requestCompletion(int position);
+	json requestCompletion(int line, int character);
 	// completionItem/resolve
 	json requestHover(int position);
 	// textDocument/signatureHelp
@@ -79,8 +80,9 @@ public:
 
 private:
 	int id = 0;
+	HANDLE log_file;
 	ScintillaGateway &editor;
-	std::vector<BYTE> buffer;
+	json capabilities;
 
 	HANDLE g_hChildStd_IN_Rd;
 	HANDLE g_hChildStd_IN_Wr;
@@ -91,5 +93,8 @@ private:
 
 	void CreatePipes();
 	void CreateChildProcess();
+
+	void log(const std::string &s);
+	void log(const json &j);
 };
 
