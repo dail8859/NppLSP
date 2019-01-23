@@ -68,8 +68,8 @@ LspClient *current_client = nullptr;
 static void GotoDefiniton() {
 	auto range = current_client->requestDefinition(editor.GetCurrentPos());
 
-	int s = editor.PositionFromLine(range["start"]["line"]) + range["start"]["character"];
-	int e = editor.PositionFromLine(range["end"]["line"]) + range["end"]["character"];
+	int s = editor.PositionFromLine(range["start"]["line"].get<uint32_t>()) + range["start"]["character"].get<uint32_t>();
+	int e = editor.PositionFromLine(range["end"]["line"].get<uint32_t>()) + range["end"]["character"].get<uint32_t>();
 
 	editor.SetSel(s, e);
 }
