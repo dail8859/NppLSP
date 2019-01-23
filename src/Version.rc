@@ -36,13 +36,14 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
         {
             VALUE "Comments", "Notepad++ plugin"
             VALUE "CompanyName", "Justin Dailey <dail8859@yahoo.com>"
-            VALUE "FileDescription", "Notepad++ plugin"
+            VALUE "FileDescription", DESCR
             VALUE "FileVersion", VERSION_TEXT
-            VALUE "InternalName", "NppLsp"
-            VALUE "OriginalFilename", "NppLsp.dll"
-            VALUE "ProductName", "NppLsp"
+            VALUE "InternalName", PACKAGE_NAME
+            VALUE "OriginalFilename", PACKAGE_NAME ".dll"
+            VALUE "ProductName", PACKAGE_NAME
             VALUE "ProductVersion", VERSION_TEXT
             VALUE "SpecialBuild", "UNICODE"
+            //VALUE "LegalCopyright", LICENSE_TEXT
         }
     }
     BLOCK "VarFileInfo"
